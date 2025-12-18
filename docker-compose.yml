@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # Base de datos PostgreSQL única para ambos microservicios
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: devsu
+      POSTGRES_PASSWORD: devsu123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+    networks:
+      - devsu-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devsu"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ para comunicación asíncrona entre microservicios
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"   # Puerto AMQP
+      - "15672:15672" # Puerto de Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - devsu-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Microservicio de Clientes (Cliente + Persona)
+  clientes-service:
+    build:
+      context: ./clientes
+      dockerfile: Dockerfile
+    container_name: clientes-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/clientesdb
+      SPRING_DATASOURCE_USERNAME: devsu
+      SPRING_DATASOURCE_PASSWORD: devsu123
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SERVER_PORT: 8081
+    ports:
+      - "8081:8081"
+    networks:
+      - devsu-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Microservicio de Cuentas (Cuenta + Movimientos)
+  cuentas-service:
+    build:
+      context: ./cuentas
+      dockerfile: Dockerfile
+    container_name: cuentas-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cuentasdb
+      SPRING_DATASOURCE_USERNAME: devsu
+      SPRING_DATASOURCE_PASSWORD: devsu123
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SERVER_PORT: 8082
+    ports:
+      - "8082:8082"
+    networks:
+      - devsu-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  devsu-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+

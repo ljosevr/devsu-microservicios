@@ -1,0 +1,5 @@
+rootProject.name = 'devsu-microservices'
+
+include 'clientes'
+include 'cuentas'
+
