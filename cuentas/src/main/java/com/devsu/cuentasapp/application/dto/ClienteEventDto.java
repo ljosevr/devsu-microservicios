@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,5 +17,6 @@ public class ClienteEventDto {
     private String nombre;
     private String identificacion;
     private String eventType;
+    private List<CuentaInfoDto> cuentas; // Lista de cuentas a crear (solo para CREATED)
 }
 

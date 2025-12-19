@@ -47,7 +47,31 @@ public class ClienteEventListener {
 
     private void handleClienteCreated(ClienteEventDto event) {
         log.info("Cliente creado: {} - {}", event.getClienteId(), event.getNombre());
-        // Se podría actualizar información adicional si es necesario
+
+        // Si el evento incluye cuentas, crearlas automáticamente
+        if (event.getCuentas() != null && !event.getCuentas().isEmpty()) {
+            log.info("Creando {} cuenta(s) para el cliente: {}", event.getCuentas().size(), event.getClienteId());
+
+            event.getCuentas().forEach(cuentaInfo -> {
+                try {
+                    Cuenta cuenta = new Cuenta();
+                    cuenta.setNumeroCuenta(cuentaInfo.numeroCuenta());
+                    cuenta.setTipoCuenta(cuentaInfo.tipoCuenta());
+                    cuenta.setSaldoInicial(cuentaInfo.saldoInicial());
+                    cuenta.setSaldoActual(cuentaInfo.saldoInicial());
+                    cuenta.setEstado(true);
+                    cuenta.setClienteId(event.getClienteId());
+                    cuenta.setClienteNombre(event.getNombre());
+
+                    cuentaRepository.save(cuenta);
+                    log.info("Cuenta {} creada exitosamente para el cliente {}",
+                            cuentaInfo.numeroCuenta(), event.getClienteId());
+                } catch (Exception e) {
+                    log.error("Error al crear cuenta {} para el cliente {}: {}",
+                            cuentaInfo.numeroCuenta(), event.getClienteId(), e.getMessage());
+                }
+            });
+        }
     }
 
     private void handleClienteUpdated(ClienteEventDto event) {

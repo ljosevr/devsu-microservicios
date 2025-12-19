@@ -1,8 +1,10 @@
 package com.devsu.clientesapp.application.service;
 
+import com.devsu.clientesapp.application.dto.ClienteConCuentasRequestDto;
 import com.devsu.clientesapp.application.dto.ClienteEventDto;
 import com.devsu.clientesapp.application.dto.ClienteRequestDto;
 import com.devsu.clientesapp.application.dto.ClienteResponseDto;
+import com.devsu.clientesapp.application.dto.CuentaInfoDto;
 import com.devsu.clientesapp.application.mapper.ClienteMapper;
 import com.devsu.clientesapp.application.usecase.*;
 import com.devsu.clientesapp.domain.exception.ClienteAlreadyExistsException;
@@ -22,6 +24,7 @@ import java.util.List;
 @Slf4j
 public class ClienteService implements
         CrearClienteUseCase,
+        CrearClienteConCuentasUseCase,
         ObtenerClientesUseCase,
         ObtenerClientePorIdUseCase,
         ObtenerClientePorClienteIdUseCase,
@@ -61,6 +64,42 @@ public class ClienteService implements
 
         log.info("Cliente creado exitosamente con id: {}", savedCliente.getId());
         return clienteMapper.toDto(savedCliente);
+    }
+
+    @Override
+    @Transactional
+    public ClienteResponseDto crear(ClienteConCuentasRequestDto requestDto) {
+        log.info("Creando cliente con cuentas: {}", requestDto.getCliente().nombre());
+
+        // Validar que no exista el cliente
+        if (clienteRepository.existsByClienteId(requestDto.getCliente().clienteId())) {
+            throw new ClienteAlreadyExistsException("clienteId", requestDto.getCliente().clienteId());
+        }
+
+        if (clienteRepository.existsByIdentificacion(requestDto.getCliente().identificacion())) {
+            throw new ClienteAlreadyExistsException("identificacion", requestDto.getCliente().identificacion());
+        }
+
+        // Crear el cliente
+        Cliente cliente = clienteMapper.toEntity(requestDto.getCliente());
+        Cliente clienteGuardado = clienteRepository.save(cliente);
+        log.info("Cliente creado exitosamente: {}", clienteGuardado.getClienteId());
+
+        // Publicar evento con las cuentas
+        List<CuentaInfoDto> cuentas = requestDto.getCuentas();
+        ClienteEventDto event = new ClienteEventDto(
+                clienteGuardado.getClienteId(),
+                clienteGuardado.getNombre(),
+                clienteGuardado.getIdentificacion(),
+                "CREATED",
+                cuentas
+        );
+
+        messagePublisher.publishClienteEvent(event);
+        log.info("Evento CREATED publicado con {} cuenta(s) para el cliente: {}",
+                cuentas.size(), clienteGuardado.getClienteId());
+
+        return clienteMapper.toDto(clienteGuardado);
     }
 
     @Override

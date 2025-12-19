@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "devsu-microservices-2024",
+		"_postman_id": "devsu-microservices-2025",
 		"name": "Devsu - Microservicios Bancarios",
 		"description": "Colección de APIs para los microservicios de Clientes y Cuentas",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -76,6 +76,30 @@
 							"port": "8081",
 							"path": ["clientes"]
 						}
+					}
+				},
+				{
+					"name": "Crear Cliente con Cuentas",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cliente\": {\n    \"nombre\": \"Maria Garcia\",\n    \"genero\": \"Femenino\",\n    \"edad\": 32,\n    \"identificacion\": \"9988776655\",\n    \"direccion\": \"Av. Principal 123\",\n    \"telefono\": \"099887766\",\n    \"clienteId\": \"CLI004\",\n    \"contrasena\": \"password123\",\n    \"estado\": true\n  },\n  \"cuentas\": [\n    {\n      \"numeroCuenta\": \"123456\",\n      \"tipoCuenta\": \"AHORROS\",\n      \"saldoInicial\": 5000.00\n    },\n    {\n      \"numeroCuenta\": \"123457\",\n      \"tipoCuenta\": \"CORRIENTE\",\n      \"saldoInicial\": 2000.00\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/clientes/con-cuentas",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["clientes", "con-cuentas"]
+						},
+						"description": "Crea un cliente y automáticamente crea sus cuentas asociadas mediante eventos RabbitMQ"
 					}
 				},
 				{
@@ -464,7 +488,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8082/reportes?cliente=CLI001&fechaInicio=2024-01-01&fechaFin=2024-12-31",
+							"raw": "http://localhost:8082/reportes?cliente=CLI001&fechaInicio=2025-01-01&fechaFin=2025-12-31",
 							"protocol": "http",
 							"host": ["localhost"],
 							"port": "8082",
@@ -476,11 +500,11 @@
 								},
 								{
 									"key": "fechaInicio",
-									"value": "2024-01-01"
+									"value": "2025-01-01"
 								},
 								{
 									"key": "fechaFin",
-									"value": "2024-12-31"
+									"value": "2025-12-31"
 								}
 							]
 						}
@@ -492,7 +516,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8082/reportes?cliente=CLI002&fechaInicio=2024-01-01&fechaFin=2024-12-31",
+							"raw": "http://localhost:8082/reportes?cliente=CLI002&fechaInicio=2025-01-01&fechaFin=2025-12-31",
 							"protocol": "http",
 							"host": ["localhost"],
 							"port": "8082",
@@ -504,11 +528,11 @@
 								},
 								{
 									"key": "fechaInicio",
-									"value": "2024-01-01"
+									"value": "2025-01-01"
 								},
 								{
 									"key": "fechaFin",
-									"value": "2024-12-31"
+									"value": "2025-12-31"
 								}
 							]
 						}

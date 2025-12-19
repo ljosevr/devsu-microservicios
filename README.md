@@ -1,6 +1,10 @@
 # Devsu - Proyecto de Microservicios
 
+[![GitHub](https://img.shields.io/badge/GitHub-ljosevr%2Fdevsu--microservicios-blue?logo=github)](https://github.com/ljosevr/devsu-microservicios)
+
 Sistema de gestión bancaria implementado con arquitectura de microservicios utilizando Spring Boot, PostgreSQL y RabbitMQ.
+
+**🔗 Repositorio:** https://github.com/ljosevr/devsu-microservicios
 
 ## 📋 Tabla de Contenidos
 - [Descripción](#descripción)
@@ -27,6 +31,15 @@ Sistema de microservicios que gestiona clientes y sus cuentas bancarias con las 
 - Registro de movimientos (depósitos y retiros)
 - Validación de saldo disponible
 - Generación de reportes de estado de cuenta
+- **✨ Creación automática de cuentas mediante eventos**
+
+### ✨ Funcionalidad Especial: Crear Cliente con Cuentas
+El sistema permite crear un cliente con sus cuentas asociadas en una sola operación:
+- El microservicio de **Clientes** recibe la solicitud con datos del cliente y sus cuentas
+- Crea el cliente en su base de datos
+- Publica un evento con la información de las cuentas
+- El microservicio de **Cuentas** escucha el evento y crea automáticamente las cuentas
+- Todo esto ocurre de forma **asíncrona** mediante RabbitMQ
 
 ## 🏗️ Arquitectura
 
@@ -40,15 +53,16 @@ El proyecto implementa **Clean Architecture** con la siguiente estructura:
 
 ### Comunicación entre Microservicios
 - **Asíncrona**: RabbitMQ para eventos de cambios en clientes
-- **Base de datos**: PostgreSQL con bases de datos separadas
+- **Base de datos**: PostgreSQL con bases de datos y schemas separados
+  - `clientesdb` → `clientes_schema` (tablas: personas, clientes)
+  - `cuentasdb` → `cuentas_schema` (tablas: cuentas, movimientos)
 
 ## 🛠️ Tecnologías Utilizadas
 
 - **Java 17**
 - **Spring Boot 3.3.5**
 - **Spring Data JPA**
-- **PostgreSQL 15** (desarrollo y producción)
-- **H2 Database** (solo para pruebas automatizadas)
+- **PostgreSQL 15** con schemas organizados por microservicio
 - **RabbitMQ 3.12**
 - **Docker & Docker Compose**
 - **Gradle**
@@ -154,7 +168,9 @@ docker-compose ps
 - Usuario: `devsu`
 - Contraseña: `devsu123`
 - Base de datos Clientes: `clientesdb`
+  - Schema: `clientes_schema`
 - Base de datos Cuentas: `cuentasdb`
+  - Schema: `cuentas_schema`
 
 **RabbitMQ:**
 - Usuario: `devsu`
@@ -207,6 +223,7 @@ Los reportes se generan en:
 
 #### Clientes
 - `POST /clientes` - Crear cliente
+- `POST /clientes/con-cuentas` - **✨ NUEVO: Crear cliente con cuentas asociadas** (usa eventos para crear cuentas automáticamente)
 - `GET /clientes` - Listar todos los clientes
 - `GET /clientes/{id}` - Obtener cliente por ID
 - `GET /clientes/clienteId/{clienteId}` - Obtener cliente por clienteId
@@ -245,7 +262,38 @@ Se incluye una colección de Postman en el archivo `Devsu-Microservicios.postman
 
 ### Ejemplos de Uso
 
-#### 1. Crear Cliente
+#### 1. ✨ Crear Cliente con Cuentas
+```json
+POST http://localhost:8081/clientes/con-cuentas
+{
+  "cliente": {
+    "nombre": "Maria Garcia",
+    "genero": "Femenino",
+    "edad": 32,
+    "identificacion": "9988776655",
+    "direccion": "Av. Principal 123",
+    "telefono": "099887766",
+    "clienteId": "CLI004",
+    "contrasena": "password123",
+    "estado": true
+  },
+  "cuentas": [
+    {
+      "numeroCuenta": "123456",
+      "tipoCuenta": "AHORROS",
+      "saldoInicial": 5000.00
+    },
+    {
+      "numeroCuenta": "123457",
+      "tipoCuenta": "CORRIENTE",
+      "saldoInicial": 2000.00
+    }
+  ]
+}
+```
+**Nota:** Este endpoint crea el cliente y automáticamente crea sus cuentas mediante eventos asíncronos.
+
+#### 2. Crear Cliente (Forma tradicional)
 ```json
 POST http://localhost:8081/clientes
 {
@@ -261,7 +309,7 @@ POST http://localhost:8081/clientes
 }
 ```
 
-#### 2. Crear Cuenta
+#### 3. Crear Cuenta
 ```json
 POST http://localhost:8082/cuentas
 {
@@ -300,7 +348,7 @@ GET http://localhost:8082/reportes?cliente=CLI001&fechaInicio=2024-01-01&fechaFi
 
 ## 📊 Datos de Prueba
 
-El sistema se inicializa con los siguientes datos (ver `init-databases.sql`):
+El sistema se inicializa con los siguientes datos (ver `BaseDatos.sql`):
 
 ### Clientes
 1. **Jose Lema** (CLI001)

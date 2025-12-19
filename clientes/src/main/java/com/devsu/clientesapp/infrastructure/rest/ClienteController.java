@@ -1,5 +1,6 @@
 package com.devsu.clientesapp.infrastructure.rest;
 
+import com.devsu.clientesapp.application.dto.ClienteConCuentasRequestDto;
 import com.devsu.clientesapp.application.dto.ClienteRequestDto;
 import com.devsu.clientesapp.application.dto.ClienteResponseDto;
 import com.devsu.clientesapp.application.usecase.*;
@@ -20,6 +21,7 @@ import java.util.List;
 public class ClienteController {
 
     private final CrearClienteUseCase crearClienteUseCase;
+    private final CrearClienteConCuentasUseCase crearClienteConCuentasUseCase;
     private final ObtenerClientesUseCase obtenerClientesUseCase;
     private final ObtenerClientePorIdUseCase obtenerClientePorIdUseCase;
     private final ObtenerClientePorClienteIdUseCase obtenerClientePorClienteIdUseCase;
@@ -30,6 +32,14 @@ public class ClienteController {
     @Operation(summary = "Crear un nuevo cliente")
     public ResponseEntity<ClienteResponseDto> crearCliente(@Valid @RequestBody ClienteRequestDto requestDto) {
         ClienteResponseDto response = crearClienteUseCase.crear(requestDto);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/con-cuentas")
+    @Operation(summary = "Crear un nuevo cliente con sus cuentas asociadas",
+               description = "Crea un cliente y automáticamente crea sus cuentas en el microservicio de cuentas mediante eventos")
+    public ResponseEntity<ClienteResponseDto> crearClienteConCuentas(@Valid @RequestBody ClienteConCuentasRequestDto requestDto) {
+        ClienteResponseDto response = crearClienteConCuentasUseCase.crear(requestDto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
